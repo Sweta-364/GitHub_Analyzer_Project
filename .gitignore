@@ -18,6 +18,9 @@ Thumbs.db
 .idea/
 *.swp
 
-# Agent skills
+# Agent skills / AI tooling config (dev-only, not needed for prod or collaborators)
 .agents/
 backend/.agents/
+skills-lock.json
+CLAUDE.md
+.claude/

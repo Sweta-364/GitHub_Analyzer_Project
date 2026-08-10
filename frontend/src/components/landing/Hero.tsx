@@ -56,23 +56,25 @@ export default function Hero() {
 
       {/* Search form */}
       <form onSubmit={handleSubmit} className="w-full max-w-xl">
-        <div className="border border-term-border bg-term-pane flex items-center gap-2 px-4 h-14 w-full">
-          <span className="text-term-dim whitespace-nowrap text-sm select-none flex-shrink-0">
-            user@gitpulse:~$
-          </span>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="github_username"
-            className="flex-1 bg-transparent text-term-green outline-none placeholder:text-term-muted text-sm min-w-0"
-            style={{ caretColor: '#33ff00' }}
-            autoFocus
-          />
+        <div className="border border-term-border bg-term-pane flex flex-col sm:flex-row sm:items-center gap-2 p-3 sm:px-4 sm:h-14 w-full">
+          <div className="flex items-center gap-2 flex-1 min-w-0 h-9 sm:h-auto">
+            <span className="text-term-dim whitespace-nowrap text-sm select-none flex-shrink-0">
+              user@gitpulse:~$
+            </span>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="github_username"
+              className="flex-1 bg-transparent text-term-green outline-none placeholder:text-term-muted text-sm min-w-0"
+              style={{ caretColor: '#33ff00' }}
+              autoFocus
+            />
+          </div>
           <button
             type="submit"
             disabled={loading}
-            className="h-9 px-4 text-sm font-mono border border-term-green text-term-green bg-transparent hover:bg-term-green hover:text-black transition-all disabled:opacity-40 disabled:pointer-events-none tracking-wide flex-shrink-0"
+            className="h-10 sm:h-9 px-4 text-sm font-mono border border-term-green text-term-green bg-transparent hover:bg-term-green hover:text-black transition-all disabled:opacity-40 disabled:pointer-events-none tracking-wide flex-shrink-0 w-full sm:w-auto"
           >
             {loading ? (
               <span className="animate-blink">&gt; ...</span>
