@@ -44,9 +44,17 @@ def build_analysis_prompt(data: ProcessedGitHubData) -> str:
     for w in data.weekly_activity[-8:]:
         activity_summary += f"  - Week of {w.week}: {w.commits} commits, {w.prs} PRs\n"
 
+    archetype_line = ""
+    if data.archetype:
+        archetype_line = f"- Developer Archetype: {data.archetype} — {data.archetype_description}\n"
+
+    rhythm_line = ""
+    if data.commit_rhythm and data.commit_rhythm != "Not enough data":
+        rhythm_line = f"- Commit Rhythm: {data.commit_rhythm} — {data.commit_rhythm_description}\n"
+
     prompt = f"""## Developer Profile: {u.login}
 
-**Computed Scores** (each 0–10):
+{archetype_line}{rhythm_line}**Computed Scores** (each 0–10):
 - Language Diversity: {s.language_diversity_score:.1f} — {_score_interpretation(s.language_diversity_score)}
 - Commit Consistency: {s.commit_consistency_score:.1f} — {_score_interpretation(s.commit_consistency_score)}
 - Project Depth: {s.project_depth_score:.1f} — {_score_interpretation(s.project_depth_score)}

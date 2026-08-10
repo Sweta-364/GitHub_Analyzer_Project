@@ -89,6 +89,10 @@ export interface ProcessedGitHubData {
   total_prs_90d: number
   longest_streak_days: number
   current_streak_days: number
+  archetype: string | null
+  archetype_description: string | null
+  commit_rhythm: string | null
+  commit_rhythm_description: string | null
 }
 
 // ── API request / response shapes ─────────────────────────────────────────────

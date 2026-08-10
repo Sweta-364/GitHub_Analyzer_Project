@@ -67,6 +67,10 @@ class ProcessedGitHubData(BaseModel):
     total_prs_90d: int = 0
     longest_streak_days: int = 0
     current_streak_days: int = 0
+    archetype: str | None = None
+    archetype_description: str | None = None
+    commit_rhythm: str | None = None
+    commit_rhythm_description: str | None = None
 
 
 # ── API schemas ───────────────────────────────────────────────────────────────

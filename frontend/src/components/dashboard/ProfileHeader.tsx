@@ -6,6 +6,10 @@ interface ProfileHeaderProps {
   totalCommits90d: number
   longestStreak: number
   currentStreak: number
+  archetype?: string | null
+  archetypeDescription?: string | null
+  commitRhythm?: string | null
+  commitRhythmDescription?: string | null
 }
 
 function pad(label: string, width: number): string {
@@ -17,8 +21,13 @@ export default function ProfileHeader({
   totalCommits90d,
   longestStreak,
   currentStreak,
+  archetype,
+  archetypeDescription,
+  commitRhythm,
+  commitRhythmDescription,
 }: ProfileHeaderProps) {
   const joinYear = new Date(user.created_at).getFullYear()
+  const showRhythm = commitRhythm && commitRhythm !== 'Not enough data'
 
   return (
     <div className="border border-term-border bg-term-pane p-5">
@@ -42,6 +51,28 @@ export default function ProfileHeader({
               <span className="text-term-dim text-sm font-normal">@{user.login}</span>
             </p>
           </div>
+
+          {/* ML badges: archetype + commit rhythm */}
+          {(archetype || showRhythm) && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {archetype && (
+                <span
+                  title={archetypeDescription ?? undefined}
+                  className="px-2 py-0.5 text-[11px] font-mono border border-term-green/40 text-term-green bg-term-green/5"
+                >
+                  {archetype}
+                </span>
+              )}
+              {showRhythm && (
+                <span
+                  title={commitRhythmDescription ?? undefined}
+                  className="px-2 py-0.5 text-[11px] font-mono border border-term-border text-term-dim"
+                >
+                  {commitRhythm}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Info fields */}
           <div className="space-y-0.5 text-xs mb-3">

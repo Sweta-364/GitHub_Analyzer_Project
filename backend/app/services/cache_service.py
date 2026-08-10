@@ -56,6 +56,34 @@ async def get_cached(username: str, db: AsyncSession) -> ProcessedGitHubData | N
     return None
 
 
+async def get_historical_score_vectors(
+    db: AsyncSession, exclude_username: str | None = None, limit: int = 300
+) -> list[list[float]]:
+    """Score vectors from prior analyses — training data for archetype clustering."""
+    try:
+        query = select(Analysis.scores_json).join(User, Analysis.user_id == User.id)
+        if exclude_username:
+            query = query.where(User.github_username != exclude_username.lower())
+        query = query.order_by(Analysis.created_at.desc()).limit(limit)
+        result = await db.execute(query)
+        vectors = []
+        for (scores_json,) in result.all():
+            if not scores_json:
+                continue
+            vectors.append(
+                [
+                    scores_json.get("language_diversity_score", 0.0),
+                    scores_json.get("commit_consistency_score", 0.0),
+                    scores_json.get("project_depth_score", 0.0),
+                    scores_json.get("collaboration_index", 0.0),
+                    scores_json.get("activity_recency_score", 0.0),
+                ]
+            )
+        return vectors
+    except Exception:
+        return []
+
+
 async def set_cached(
     username: str,
     avatar_url: str,

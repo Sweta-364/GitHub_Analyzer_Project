@@ -74,6 +74,52 @@ async def fetch_repo_languages(
     return resp.json()
 
 
+def _repo_owner(repository_url: str) -> str:
+    parts = repository_url.rstrip("/").split("/")
+    return parts[-2] if len(parts) >= 2 else ""
+
+
+async def fetch_collaboration_stats(client: httpx.AsyncClient, username: str) -> dict[str, int]:
+    """
+    Uses the Search API to see a user's full PR/comment history across all
+    repos (not just the last ~90 days visible via the Events API, which
+    misses most real cross-repo collaboration for accounts that don't push
+    directly through GitHub's UI).
+    """
+    pr_resp = await client.get(
+        f"{GITHUB_API}/search/issues",
+        params={
+            "q": f"type:pr author:{username}",
+            "per_page": 100,
+            "sort": "created",
+            "order": "desc",
+        },
+    )
+    comment_resp = await client.get(
+        f"{GITHUB_API}/search/issues",
+        params={"q": f"commenter:{username} -author:{username}", "per_page": 1},
+    )
+
+    external_prs = 0
+    if pr_resp.status_code == 200:
+        pr_data = pr_resp.json()
+        total_prs = pr_data.get("total_count", 0)
+        items = pr_data.get("items", [])
+        external_sample = [
+            item
+            for item in items
+            if _repo_owner(item.get("repository_url", "")).lower() != username.lower()
+        ]
+        if items:
+            external_prs = round(total_prs * (len(external_sample) / len(items)))
+
+    external_comments = 0
+    if comment_resp.status_code == 200:
+        external_comments = comment_resp.json().get("total_count", 0)
+
+    return {"external_prs": external_prs, "external_comments": external_comments}
+
+
 async def fetch_events(client: httpx.AsyncClient, username: str) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     for page in range(1, 4):
@@ -91,10 +137,11 @@ async def fetch_events(client: httpx.AsyncClient, username: str) -> list[dict[st
 
 async def fetch_all_data(username: str) -> dict[str, Any]:
     async with httpx.AsyncClient(headers=_headers(), timeout=20.0) as client:
-        user_data, repos_data, events_data = await asyncio.gather(
+        user_data, repos_data, events_data, collaboration_stats = await asyncio.gather(
             fetch_user(client, username),
             fetch_repos(client, username),
             fetch_events(client, username),
+            fetch_collaboration_stats(client, username),
         )
 
         top_repos = repos_data[:10]
@@ -111,6 +158,7 @@ async def fetch_all_data(username: str) -> dict[str, Any]:
         "repos": repos_data,
         "events": events_data,
         "languages_by_repo": languages_by_repo,
+        "collaboration_stats": collaboration_stats,
     }
 
 

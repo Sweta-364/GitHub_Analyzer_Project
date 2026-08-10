@@ -9,3 +9,5 @@ alembic==1.13.2
 redis[asyncio]==5.0.8
 pydantic==2.9.2
 pydantic-settings==2.5.2
+scikit-learn==1.5.2
+numpy==2.1.3

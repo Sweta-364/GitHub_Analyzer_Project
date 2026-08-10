@@ -79,6 +79,10 @@ export default function DashboardPage() {
               totalCommits90d={githubData.total_commits_90d}
               longestStreak={githubData.longest_streak_days}
               currentStreak={githubData.current_streak_days}
+              archetype={githubData.archetype}
+              archetypeDescription={githubData.archetype_description}
+              commitRhythm={githubData.commit_rhythm}
+              commitRhythmDescription={githubData.commit_rhythm_description}
             />
 
             {/* Score cards */}

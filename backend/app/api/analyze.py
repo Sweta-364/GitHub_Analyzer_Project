@@ -11,6 +11,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.ml import archetype as archetype_ml
+from app.ml import rhythm as rhythm_ml
 from app.models.schemas import ProcessedGitHubData, DeveloperScores
 from app.services import cache_service, claude_service, github_service
 from app.utils import scoring
@@ -52,12 +54,15 @@ async def event_stream(
     weekly_commits = [w.commits for w in weekly_activity]
 
     # 4. Compute scores
+    collab_stats = raw.get("collaboration_stats", {})
     scores_dict = scoring.build_scores(
         languages_by_bytes=languages_by_bytes,
         weekly_commits=weekly_commits,
         repos=raw["repos"],
         events=raw["events"],
         username=username,
+        external_prs=collab_stats.get("external_prs", 0),
+        external_comments=collab_stats.get("external_comments", 0),
     )
 
     current_streak, longest_streak = scoring.compute_streaks(raw["events"])
@@ -66,6 +71,15 @@ async def event_stream(
     total_prs_90d = sum(
         1 for e in raw["events"] if e.get("type") == "PullRequestEvent"
     )
+
+    # 4b. ML: archetype clustering + commit rhythm detection
+    historical_vectors = await cache_service.get_historical_score_vectors(
+        db, exclude_username=username
+    )
+    archetype_label, archetype_desc = archetype_ml.assign_archetype(
+        scores_dict, historical_vectors
+    )
+    rhythm_label, rhythm_desc = rhythm_ml.detect_commit_rhythm(raw["events"])
 
     processed = ProcessedGitHubData(
         user=raw["user"],
@@ -77,6 +91,10 @@ async def event_stream(
         total_prs_90d=total_prs_90d,
         current_streak_days=current_streak,
         longest_streak_days=longest_streak,
+        archetype=archetype_label,
+        archetype_description=archetype_desc,
+        commit_rhythm=rhythm_label,
+        commit_rhythm_description=rhythm_desc,
     )
 
     # 5. Send data event

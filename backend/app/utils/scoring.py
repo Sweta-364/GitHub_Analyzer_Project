@@ -80,20 +80,13 @@ def project_depth_score(repos: list[dict[str, Any]]) -> float:
     return round(min(normalized, 10.0), 2)
 
 
-def collaboration_index(events: list[dict[str, Any]], username: str) -> float:
-    points = 0.0
-    for event in events:
-        repo_owner = event.get("repo", {}).get("name", "").split("/")[0]
-        if repo_owner.lower() == username.lower():
-            continue
-        etype = event.get("type", "")
-        if etype == "PullRequestEvent":
-            points += 3
-        elif etype == "IssueCommentEvent":
-            points += 1
-        elif etype == "ForkEvent":
-            points += 0.5
-
+def collaboration_index(external_prs: int, external_comments: int) -> float:
+    """
+    Based on Search API results covering a user's full history (not just the
+    Events API's ~90 day window), so it reflects real cross-repo
+    collaboration even for accounts that rarely push through GitHub's UI.
+    """
+    points = external_prs * 3 + external_comments * 1
     return round(min(points / 30 * 10, 10.0), 2)
 
 
@@ -169,11 +162,13 @@ def build_scores(
     repos: list[dict[str, Any]],
     events: list[dict[str, Any]],
     username: str,
+    external_prs: int = 0,
+    external_comments: int = 0,
 ) -> dict[str, float]:
     ld = language_diversity_score(languages_by_bytes)
     cc = commit_consistency_score(weekly_commits)
     pd = project_depth_score(repos)
-    ci = collaboration_index(events, username)
+    ci = collaboration_index(external_prs, external_comments)
     ar = activity_recency_score(events)
 
     overall = cc * 0.30 + ar * 0.25 + pd * 0.20 + ld * 0.15 + ci * 0.10
