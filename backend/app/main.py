@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -11,12 +12,19 @@ from app.core.redis import close_redis
 from app.models.db_models import Base
 from app.models.schemas import HealthResponse
 
+logger = logging.getLogger("gitpulse")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: create tables if they don't exist
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Startup: create tables if they don't exist. Don't let a DB outage
+    # (e.g. a paused Supabase free-tier project) block the app from
+    # starting and serving /health.
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception:
+        logger.exception("Database unavailable at startup; continuing without table sync")
     yield
     # Shutdown: close Redis connection
     await close_redis()
