@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     # Groq
     groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-120b"
 
     # CORS
     allowed_origins: str = "http://localhost:5173"

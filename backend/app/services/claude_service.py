@@ -1,5 +1,5 @@
 """
-Groq streaming service (llama-3.3-70b-versatile).
+Groq streaming service. Model is configurable via the GROQ_MODEL env var.
 """
 
 import json
@@ -28,7 +28,7 @@ async def stream_analysis(data: ProcessedGitHubData) -> AsyncGenerator[str, None
         prompt = build_analysis_prompt(data)
 
         stream = await client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=settings.groq_model,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
